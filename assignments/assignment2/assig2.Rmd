@@ -1,0 +1,193 @@
+---
+title: "R Studio Basic for Data Sciences"
+author: "Binabh Devkota"
+date: "9/11/2021"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+1. Create data frame with these two column vectors in R Studio  
+x = 1:30  
+y = x^3  
+The code below creates two column vectors with the given condition and then data frame df is created from those two column vectors.
+```{r}
+x<-c(1:30)
+y<-x^3
+df<-data.frame(x,y)
+```
+2. Create plot of x and y variables in R Studio and interpret it carefully  
+The code below plots x and y variables from the data frame df. The plot is cubic(i.e. non-linear) in nature. The value of x is plotted along x axis and that of y is plotted along y axis.
+```{r}
+plot(df$x,df$y, main="Plot of x and y", col ="green", xlab="x", ylab="y")
+```
+  
+3. Get appropriate correlation coefficient of this data in R Studio and interpret it carefully  
+Correlation coefficient between x and y can be achieved using code below
+```{r}
+coff <- cor(df$x,df$y,method = "spearman")
+print(coff)
+```
+Here method spearman is used because the nature of data is non linear and this method is suitable for such kind of data. As we see the value is 1, we can know that there is a perfect positive correlation between these two variables.  
+4. Transform the plot to linear using appropriate mathematical function in R Studio  
+The plot of x and y can be transformed to linear using log functions to both the variables as shown below:
+```{r}
+df$z <- log(df$y)
+df$w <- log(df$x)
+plot(df$w,df$z,col="green",main="Plot of log(x) and log(y)", xlab="log(x)", ylab="log(y)")
+```
+  
+Hence we obtain linear plot after the transformation.  
+5. Get appropriate correlation coefficient now in R Studio and interpret it carefully too  
+Correlation between `df$w` and `df$z` can be obtained using code below:  
+```{r}
+coff <- cor(df$w,df$z,method = "pearson")
+print(coff)
+```
+  
+Here pearson method is used because the relation between these variables is seen as linear in the plot above. As we see the value is 1, we can know that there is a perfect positive correlation between these two variables.  
+6. Create a new column vector z defined in the slide 18 of session two slide deck in R Studio  
+The vector z is created in code below:  
+```{r}
+z <- c(1,1,2,2,2,2,2,3,3,3,3,3,3,3,3,3,3,4,4,4,4,4,5,5,5,6,6,7)
+print(z)
+```
+  
+7. Create a histogram of z variable in R Studio and interpret it carefully  
+Histogram for z variable is created using code below:
+```{r}
+hist(z, main="Histogram of z", col = "green")
+```
+  
+Looking at the histogram we can see that the data is not uniform distribution but is right-skewed(Positive skewness).  
+8. Get summary statistics of z variable in R Studio and interpret it carefully  
+Summary for z variable can be obtained using the code below:  
+```{r}
+summary(z)
+```
+  
+From summary above we can know statistical measures for the above vector z.  
+9. Get box-plot of z variable in R Studio and interpret the result carefully
+```{r}
+boxplot(z,main="Boxplot of z", col="green")
+```
+  
+Looking at the box plot above we can know that for given vector z we see that min and max are determined by the end of lower and upper whiskers respectively. Q1 and Q3 are determined by lower and upper border of box respectively and median is the bold black line in the center of the box.  
+Max value 7 is considered as outlier here because any value above Q3 + 1.5 times inter quartile range and below Q1 - 1.5 times of inter quartile range is considered to be an outlier. So any value below `2.750 - (1.25 * 1.5) ` and any value above `4 + (1.25 * 1.5)` are outliers where 1.25 is interquartile range.  
+10. Import “covnep_252days.csv” data in R Studio and describe the variables in it  
+```{r}
+library(readr)
+covnep_252days <- read_csv("~/MDS/covnep_252days.csv", 
+    col_types = cols(date = col_date(format = "%m/%d/%Y")))
+covnep_df <- data.frame(covnep_252days)
+str(covnep_df)
+```
+  
+As seen in the output of code above we imported the csv file and converted the date column to date type. For importing we used `readr` library. Also there are total 7 variables namely date, totalCases, newCases, totalRecoveries, newRecoveries, totalDeaths and newDeaths. date is of Date type while all others are of type number.  
+11. Create a chart with “totalCases” variable in y-axis and “date” variable in the x-axis in R Studio, describe the process leading to the creation of this chart  
+```{r}
+plot(covnep_df$date,covnep_df$totalCases, main="Total covid cases", col="green", xlab="Date", ylab="Total cases")
+```
+  
+To get the plot above we used `covnep_df` data frame and plotted its variables `covnep_df$date` and `covnep_df$totalCases` along x and y axis.
+
+12. Get summary statistics of “totalCases” variable in R Studio and interpret it carefully  
+```{r}
+summary(covnep_df$totalCases)
+```
+  
+By looking at the summary of the totalCases we get insights about totalCases. Above are all the statistical values for this variable.
+
+13. Create histogram of “newCases” variable in R Studio and interpret it carefully  
+```{r}
+hist(covnep_df$newCases, xlab="New Cases", col="green", main="Histogram of new cases")
+```
+  
+Looking at the histogram of newCases in the dataframe we can clearly see that data is not symmetrical but right skewed.  
+14. Get summary statistics of “newCases” variable in R Studio and interpret it carefully  
+```{r}
+summary(covnep_df$newCases)
+```
+  
+Summary of newCases variables shows all the statistical values of the variable. The data we get is for min, max, Q1, median, Q3 and mode. The values are shown above.  
+15. Get “box and whisker” plot of “newCases” variable in R Studio and interpret it carefully  
+```{r}
+boxplot(covnep_df$newCases, main="Box plot of new cases", col="green")
+```
+  
+Seeing at the boxplot above for the newCases we see that the minimum and first quartile data overlap with each other and we also see many outliers above the maximum value whiskers by that we know that most of the maximum values are more than Q3 + 1.5 times the interquartile range.   
+16. Import “SAQ8.sav” data in R Studio and get frequency distribution (number and percentage of the attributes) of q01, q03, q06 and q08 variables on R Studio and interpret them carefully  
+Library `haven` is used to load the `.sav` file.
+```{r}
+library(haven)
+SAQ8 <- read_sav("~/MDS/SAQ8.sav")
+SAQ8_df <- data.frame(SAQ8)
+print(head(SAQ8_df))
+```
+## For frequency table distribution
+```{r}
+require(plyr)
+```
+```{r}
+q01_df<-count(SAQ8_df, "q01")
+q01_df$Percentage<-round(100*q01_df$freq/sum(q01_df$freq),1)
+q01_df$`Valid Percentage`<-round(100*q01_df$freq/sum(q01_df$freq),1)
+q01_df$`Cumulative Percentage`<-round(100*cumsum(q01_df$freq)/sum(q01_df$freq),1)
+q01_df["Total",] <- colSums(q01_df)
+q01_df["Total", "Cumulative Percentage"]<- " "
+print(q01_df)
+```
+```{r}
+q03_df<-count(SAQ8_df, "q03")
+q03_df$Percentage<-round(100*q03_df$freq/sum(q03_df$freq),1)
+q03_df$`Valid Percentage`<-round(100*q03_df$freq/sum(q03_df$freq),1)
+q03_df$`Cumulative Percentage`<-round(100*cumsum(q03_df$freq)/sum(q03_df$freq),1)
+q03_df["Total",] <- colSums(q03_df)
+q03_df["Total", "Cumulative Percentage"]<- " "
+print(q03_df)
+```
+```{r}
+q06_df<-count(SAQ8_df, "q06")
+q06_df$Percentage<-round(100*q06_df$freq/sum(q06_df$freq),1)
+q06_df$`Valid Percentage`<-round(100*q06_df$freq/sum(q06_df$freq),1)
+q06_df$`Cumulative Percentage`<-round(100*cumsum(q06_df$freq)/sum(q06_df$freq),1)
+q06_df["Total",] <- colSums(q06_df)
+q06_df["Total", "Cumulative Percentage"]<- " "
+print(q06_df)
+```
+```{r}
+q08_df<-count(SAQ8_df, "q08")
+q08_df$Percentage<-round(100*q08_df$freq/sum(q08_df$freq),1)
+q08_df$`Valid Percentage`<-round(100*q08_df$freq/sum(q08_df$freq),1)
+q08_df$`Cumulative Percentage`<-round(100*cumsum(q08_df$freq)/sum(q08_df$freq),1)
+q08_df["Total",] <- colSums(q08_df)
+q08_df["Total", "Cumulative Percentage"]<- " "
+print(q08_df)
+```
+  
+17. Import “MR_drugs.xls” data in R Studio and replicate multiple response frequency distribution as shown in the slide 35 of the session 2 slide deck  
+```{r}
+require(readxl)
+```
+```{r}
+MR_Drugs <- read_excel("~/MDS/MR_Drugs.xls")
+cols_of_intrest <- MR_Drugs[4:10]
+col_sums <- colSums(cols_of_intrest)
+total_sum <- sum(cols_of_intrest)
+total_num_of_cases <- nrow(cols_of_intrest)
+MR_Drugs_df <- data.frame(N = col_sums,Percent = round((col_sums/total_sum)*100,1), `Percent of cases` = round((col_sums/total_num_of_cases)*100,1),check.names = FALSE)
+MR_Drugs_df["Total",] <- colSums(MR_Drugs_df)
+print(MR_Drugs_df)
+```
+
+
+
+
+
+
+
+
+

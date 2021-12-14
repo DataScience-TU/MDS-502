@@ -1,0 +1,238 @@
+---
+title: "Project1"
+author: "Binabh Devkota"
+date: "12/6/2021"
+output: 
+  html_document:
+    df_print: paged
+    code_folding: show
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+1. Import this JSON API data "https://data.askbhunte.com/api/v1/covid" using "jsonlite" or similar package
+2. Save the imported data as "covidtbl" data frame in R (Hint: use "flatten = TRUE" after 'fromJSON' function availble in jsonlite package)
+```
+Fetching data ech time using the api was making the knitting process slow. So the data was loaded once in the browser and then saved in file and then loaded here. Data is the same but is being loaded from localfile instead of url. Replcing filepath with url will also give same result.
+```
+```{r}
+library(jsonlite)
+covidtbl <- fromJSON("./data/covid.json", flatten=TRUE)
+```
+3. Check whether the saved "covidtbl" data passes the three conditions of the "tidy" data or not! If not, make it a tidy data with explanations of rows, columns and cells in the data
+
+Conditions for tidy data are: 
+1. One row should contain one observation 
+2. One column should have only one variable 
+3. Each cell should contain atomic value
+
+columns relatedTo and point.coordinates do not have atomic values as they have list and pair of numbers respectively. So removing them.
+```{r}
+covidtbl<-subset(covidtbl,select = -c(relatedTo,point.coordinates))
+(summary(covidtbl))
+```
+4. Check if there are duplicate cases in the data using "id" variable, remove duplicate cases, if found, using R base functions: duplicated or unique (read about it and use it carefully) 
+
+if no duplicate value is present then count of unique ids should be equal to number of rows. i.e. their difference should be equal to zero.
+```{r}
+(nrow(covidtbl)-length(unique(covidtbl$id)) == 0)
+```
+Since the result above is TRUE there are no duplicate data
+
+5. Clean the "gender" variable and show the number and percentage of males and females in the data (Hint: you can use table function and prop.table functions)
+
+at first we see all the possible values in gender table.
+```{r}
+unique(covidtbl$gender)
+```
+As ve see two things need to be done here.
+1. Convert NA to "any"
+2. Bring all values to same case(we will do lowercase here)
+```{r}
+covidtbl$gender[is.na(covidtbl$gender)] <- 'any'
+covidtbl$gender<-tolower(covidtbl$gender)
+unique(covidtbl$gender)
+```
+As we see the values have made uniform to just three.
+Now finding the percentage of each gender in data
+```{r}
+genderFrame<-as.data.frame(table(covidtbl$gender))
+genderFrame$percentage<-(genderFrame$Freq/sum(genderFrame$Freq))*100
+genderFrame
+```
+6. Clean the "age" variable and show the summary statistics of the age variable and interpret the results carefully (Search the online newspapers and clean the age data, if required)
+
+For age variable we deal with NA values and outlier values
+```{r}
+summary(covidtbl$age)
+```
+As we see max age is 523 which is not possible sofiltering all ages greater than 100 we get
+```{r}
+library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
+filter(covidtbl, age>=100)
+```
+here we see that problem causing entry is only one. So replacing it with median value and also replacing NA values with medial value we get
+```{r}
+covidtbl[covidtbl$id==532, "age"] <- median(covidtbl$age,na.rm=TRUE)
+covidtbl$age[is.na(covidtbl$age)]<-median(covidtbl$age,na.rm=TRUE)
+summary(covidtbl$age)
+```
+7. Transform cleaned age variable into broad age groups i.e. <15, 15-59, 60+ years, define it as factor variable and get number and percentage of this variable and interpret it carefully
+```{r}
+covidtbl<-within(covidtbl,{
+  age.cat<-NA
+  age.cat[age<15]<-"<15"
+  age.cat[age>=15 & age<60]<-'15-59'
+  age.cat[age>=60]<-'60+'
+})
+covidtbl$age.cat <- factor(covidtbl$age.cat, levels = c("<15", "15-59", "60+"))
+summary(covidtbl$age.cat)
+```
+Here we get age as categories.
+Now getting number and percentage from data
+```{r}
+agecatdf<-as.data.frame(table(covidtbl$age.cat))
+agecatdf$percentage<-(agecatdf$Freq/sum(agecatdf$Freq))*100
+(agecatdf)
+```
+Here, we see that more than 99% of the infected people were of age 15-59 which is also the case in reality as most of the people infected early were migrant workers and Nepalese returning from foreign countries which matches same age group.
+
+8. Find the number of days between recovered and reported dates (define it as: diff1 variable), clean it if required, and get the summary statistics of this variable and interpret it carefully
+
+Converting both reported and recovered dates to Date type to find the difference
+```{r}
+covidtbl$reportedOn<-as.Date(covidtbl$reportedOn)
+covidtbl$recoveredOn<-as.Date(covidtbl$recoveredOn)
+covidtbl$diff1<-as.numeric(difftime(covidtbl$recoveredOn,covidtbl$reportedOn, units = "days"))
+summary(covidtbl$diff1)
+```
+From summary we see that 17 days was average recovering time. 179 was max and 0 was minimum.
+
+9. Find the number of days between deaths and reported dates (define it as: diff2 variable), clean it if required, and get the summary statistics of this variable and interpret it carefully
+```{r}
+covidtbl$deathOn<-as.Date(covidtbl$deathOn)
+covidtbl$diff2<-as.numeric(difftime(covidtbl$deathOn,covidtbl$reportedOn, units = "days"))
+summary(covidtbl$diff2)
+```
+here all values in summary are in place except the min which is negative. Now, upon seeing regord with negative values 
+```{r}
+filter(covidtbl,diff2<0)
+```
+Here are 29 rows that are giving negative value. This could be because the result of the reports were after the death or testing was done after the death.
+
+10. Which measures of central tendency and dispersion is most appropriate for the age, diff1 and diff2 variables? Why? Justify the use the appropriate measure of central tendency and dispersion by creating and interpreting the histogram and boxplot for the age, diff1 and diff2 variables and their careful interpretations
+
+Generating histograms for age,diff1 and diff2
+```{r}
+hist(covidtbl$age,main = "Histogram of Age", xlab = "Age")
+hist(covidtbl$diff1,main = "Histogram of recovered duration", xlab = "Recovered duration")
+hist(covidtbl$diff2,main = "Histogram of death duration", xlab = "Death duration")
+```
+
+Generating histograms for age,diff1 and diff2
+```{r}
+boxplot(covidtbl$age,main = "Boxplot of Age")
+boxplot(covidtbl$diff1,main = "Boxplot of recovered duration")
+boxplot(covidtbl$diff2,main = "Boxplot of death duration")
+```
+
+Looking at the graphs we see that data is not evenly distributed and has skewness. So, medial would be goodmeasure for central tendency and Inter Quartile range would be good for measure of dispersion.
+
+11. Show the number and percentage of the "current state" variable and interpret it carefully
+```{r}
+cs<-as.data.frame(table(covidtbl$currentState))
+cs$percentage<-(cs$Freq/sum(cs$Freq))*100
+cs
+```
+
+From above table we see that recovered cases are maximum at more than 72 percentage, more than 26% cases are active and only around 0.6% cases resulted in death. This data is valid till the date this data was taken.
+
+12. Show the number and percentage of the "isReinfected" variable, what percentage of cases were re-infected in Nepal at the given time period in the database? Was it realistic?
+```{r}
+summary(covidtbl$isReinfected)
+ri<-as.data.frame(table(covidtbl$isReinfected))
+ri$percentage<-(ri$Freq/sum(ri$Freq))*100
+ri
+```
+
+Looking at number of reinfected we see that only three people were reinfected which is realistic as during initial cases there were very few cases of reinfection.
+
+13. Show the number and percentage of "type" variable and discuss the result carefully with special reference to the missing values
+```{r}
+unique(covidtbl$type)
+# Replacing the Missing value with Unknown and then calculating percentage
+covidtbl$type[is.na(covidtbl$type)] <- 'unknown'
+t<-as.data.frame(table(covidtbl$type))
+t$percentage<-(t$Freq/sum(t$Freq))*100
+t
+```
+
+As most of the transmission types are not available and hence fall under unknown we can know that we have not efficiently tracked the modes of transmission of the virus.
+
+14. Show the number and percentage of "nationality" variable and discuss the result carefully with special reference to the missing values
+```{r}
+unique(covidtbl$nationality)
+# Replacing the Missing value with Unknown and calculating percentage
+covidtbl$nationality[is.na(covidtbl$nationality)] <- 'unknown'
+n<-as.data.frame(table(covidtbl$nationality))
+n$percentage<-(n$Freq/sum(n$Freq))*100
+n
+```
+
+Here we see that more taan 99% of the data for nationality is unknown. The possible cause of this can be that nationality being obvious as nepalese while collecting data may have been missed.
+
+15. Show cross-tabulation of province (row variable) and current status (column variable) with row percentage and interpret the result carefully (table and prop.table can be used!)
+```{r}
+xtab <- table(covidtbl$province, covidtbl$currentState)
+prop.table(xtab, margin = 1)*100
+```
+From this cross tabulation we see that recovery rate is very good for province1 while death rate is highest in Province2. 
+
+16. Show the cross-tabulation of sex (row variable) and current status (column variable) with row percentage and interpret the result carefully
+```{r}
+xtab <- table(covidtbl$gender, covidtbl$currentState)
+prop.table(xtab, margin = 1)*100
+```
+
+From cross tabulation above we see that recovery rate for male patients is higher compared to that of female.
+
+17. Show the cross-tabulation of broad age groups (row variable) and current status (column variable) with row percentage and interpret the result carefully
+```{r}
+xtab <- table(covidtbl$age.cat, covidtbl$currentState)
+prop.table(xtab, margin = 1)*100
+```
+From cross tabulation above we see that recovery rate for patients below the age of 15 is higher compared to others and death is high for patients above 60 years.
+
+18. Show the scatterplot of province (x-axis) and cleaned age (y-axis) and get the appropriate correlation coefficient for this bi-variate data and interpret the result carefully
+```{r}
+plot(covidtbl$province,covidtbl$age, main = "Scatter Plot of province and age", xlab = "Province", ylab = "Age")
+```
+
+19. Show the scatterplot of age (x-axis) and diff1 (y-axis) and get the appropriate correlation coefficient for this bi-variate data and interpret the result carefully
+```{r}
+plot(covidtbl$age,covidtbl$diff1, main = "Scatter Plot of Age and recovered time", xlab = "Age", ylab = "Recovered time")
+```
+
+20. Summarize your learning using SWOT analysis to complete this project in a 2x2 table; be honest and specific so that I can learn from you too
+```{r}
+txt<-data.frame(matrix(c("Strength", 
+      "manipulating values(like finging percentages),working with dataframes ",
+      "Oppurtinities",
+      "being able to work with apis brings alot of possibilities",
+      "Weakness",
+      "interpreting results,cross tabulation",
+      "Threat",
+      "still confused when it comes to statistical tools"), nrow = 4, byrow = FALSE))
+txt
+```
+
+
+
+
+
+
+
+
+```

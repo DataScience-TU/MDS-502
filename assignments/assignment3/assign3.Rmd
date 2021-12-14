@@ -1,0 +1,287 @@
+---
+title: "Assignment 3"
+author: "Binabh Devkota"
+date: "9/25/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Vector operations in R
+```{r}
+a<-c(1:10)
+b<-c(5)
+c<-c(2:11)
+```
+Now, printing the classes of all three variables
+```{r}
+print(class(a))
+print(class(b))
+print(class(c))
+```
+We can see that the classes of the variables a,b and c are integer, numeric and integer respectively this is because a and c vectors are generated using a range of numbers and b is just a vector with single number.
+```{r}
+ac<-cbind(a,c)
+acb <- ac*b
+```
+```{r}
+print(class(ac))
+print(class(acb))
+```
+Here we see that the class of ac and acb is type of matrix array. This is because binding two vectors a and c resulted in a matrix ac. Then multiplying it by b(a scalar) kept the class as same.  
+
+# Row Mean
+```{r}
+(d<-apply(acb, MARGIN = 1, FUN = mean))
+```
+Now, adding row mean column d to get acbd
+```{r}
+(acbd <- cbind(acb, d))
+(class(acbd))
+```
+Hence, the resulting variable acbd is also a matrix
+
+# Vector addition
+```{r}
+a <- c(1:10)
+b <- c(1:5)
+(a+b)
+```
+We get the output above because vector b will repeat itself to match that of vector a and make the vector operation possible.  
+However in case length of larger vector is not the multiple of smaller vector like:
+```{r}
+a <- c(1:10)
+b <- c(1:7)
+(a+b)
+```
+The result above will be followed by following message in R console.
+```
+Warning message:
+In a + b : longer object length is not a multiple of shorter object length
+```
+Here the key message is that the length of longer object should be multiple of length of shorter object.
+
+# Functions in R
+```{r}
+best_practice<-c('Let', 'the', 'computer', 'do', 'the', 'work')
+print_words<-function(sentence) {
+  print(sentence[1])
+  print(sentence[2])
+  print(sentence[3])
+  print(sentence[4])
+  print(sentence[5])
+  print(sentence[6])
+}
+print_words(best_practice)
+print_words(best_practice[-6])
+```
+As we see the problem with this approach is that it does not work for the cases other than the length of the vector is other than 6. As we have used fixed number of print statements.
+```{r}
+print_words<-function(sentence) {
+  for (word in sentence) {print(word)
+  }
+}
+print_words(best_practice)
+print_words(best_practice[-6])
+```
+As we see that this is better approach as it works for any vector input.
+```{r}
+(sapply(best_practice, toupper))
+```
+Here we see that using vectroized options like sapply we can use functions in vectors without using loops
+
+# Loops vs Vectoized options
+```{r}
+a <- runif(10000, 1, 10)
+```
+Finding sum using loop and calculating time
+```{r}
+start_time <- Sys.time()
+loop_total <- 0
+for(num in a){
+  loop_total = loop_total + a 
+}
+end_time <- Sys.time()
+(end_time - start_time)
+```
+Finding sum using vectorized option and calculating time
+```{r}
+start_time <- Sys.time()
+vectorized_total <- 0
+vectorized_total = sapply(a,sum)
+end_time <- Sys.time()
+(end_time - start_time)
+```
+Here, we see significant performance gain using the vectorized option.
+
+# Conditionals
+```{r}
+y<-20
+if (y < 20) {
+  x <-"Too low"
+}else {
+  x <-"Too high"
+}
+(x)
+```
+Here value of y is checked against a condition of if its greater than 20 and then value of x is determined based on that.
+
+# Pipes
+```{r}
+library(magrittr)
+rnorm(100) %>%matrix(ncol= 2) %>%plot()
+```
+
+Here piping is used to convert a matrix to a vector and then plot it.
+
+Defining x
+```{r}
+x <- c(0.109, 0.359, 0.63, 0.996, 0.515, 0.142, 0.017, 0.829, 0.907) 
+```
+Non pipe option
+```{r}
+round(exp(diff(log(x))),1)
+```
+Piped option
+```{r}
+x %>% log() %>%
+  diff() %>%
+  exp() %>%
+  round(1)
+```
+As we see pipe option leads to cleaner/readable code and we do not need to keep track of brackets and we can chain more functions if required.
+
+```{r}
+x <- rnorm(100)
+(x %<>% abs %>% sort)
+```
+This type of pipe operate will update the value of x and also assign it back to x.
+```{r}
+rnorm(200) %>%
+  matrix(ncol = 2) %T>%
+  plot %>% 
+  colSums
+```
+It is the tee operator used here. This is used to pipe the functions that do not return anything. Like, here plot does not return anything but we wish to plot as well as find colsums for the values. So we use T operator here.
+```{r}
+data.frame(z = rnorm(100)) %$% 
+  ts.plot(z)
+```
+
+The one used above is the exposition pipe operator. In the code above data from data.frame is piped to ts.plot to plot time series several times on a common plot.
+
+# dplyr
+```{r}
+library(dplyr, warn.conflicts = FALSE)
+```
+## babynames
+```{r}
+library(babynames)
+data(babynames)
+sum(select(filter(babynames,sex=="M",name=="Taylor"),n))
+babynames%>%filter(sex=="M",name=="Taylor")%>%
+  select(n)%>%
+  sum
+```
+Here both piped and non-piped options produce same result for number of male children having name Taylor. Functions like select and filter are used from dplyr package.
+
+## iris data
+```{r}
+iris <- read.csv(url("http://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data"), header = FALSE)
+```
+This loads iris data from web excluding header.
+```{r}
+names(iris) <- c("Sepal.Length", "Sepal.Width", "Petal.Length", "Petal.Width", "Species")
+```
+This assigns column names to iris data.
+```{r}
+iris$Sepal.Length.SQRT <- 
+  iris$Sepal.Length %>%
+  sqrt()
+```
+The code above square root of sepal length is calculated and stored in a seperate column Sepal.Length.SQRT.
+```{r}
+# iris$Sepal.Length %<>% sqrt
+```
+The code above square root of sepal length is calculated and stored in the same column Sepal.Length replacing the original one. But we commented it out as we don't want the original column to be modified.
+```{r}
+iris %>% 
+  subset(Sepal.Length > mean(Sepal.Length)) %$%
+  cor(Sepal.Length, Sepal.Width)
+```
+Here, exposition pipe operator is useful, because the function cor has to take input as the parameters of the function and the %$% operator makes it available to be used as such.
+```{r}
+iris %>%
+  select(starts_with("Sepal")) %>%
+  filter(Sepal.Length >=7.0) %>%
+  arrange(Sepal.Length)		
+iris %>%
+  select(starts_with("Sepal")) %>%
+  filter(Sepal.Length >=7.0) %>%
+  arrange(desc(Sepal.Length))		
+```
+The code above arranges the data in ascending and descending order respectively. Again the method used for filtering and sorting are provided by dplyr package.
+```{r}
+iris %>%
+  select(contains("Sepal")) %>%
+  mutate(Sepal.Area = Sepal.Length * Sepal.Width)
+
+iris %>%
+  select(ends_with("Length")) %>%
+  mutate(Length.Diff = Sepal.Length - Petal.Length)
+```
+Using the mutate function of dplyr package the column Length.diff and Sepal.Area are mutated with the value after required mathematical operation.
+```{r}
+iris %>%
+  select(ends_with("Length"), Species) %>%
+  rowwise() %>%
+  mutate(Length.Diff = Sepal.Length - Petal.Length)
+
+iris %>%
+  select(contains("Sepal"), Species) %>%
+  transmute(Sepal.Area = Sepal.Length * Sepal.Width)
+```
+Both rowwise and transmute are the methods of dplyr package. rowwise converts the dataframe in to tibble which makes it easy to do rowwise operations. It itself does not do anything but helps other functions to perform rowwise operations.  
+transmute is like mutate but the difference is that mutate adds a new column with the existing ones however transmute just keeps the new column replacing all of the old ones.
+# hflights
+```{r}
+library(hflights)
+```
+```{r}
+grouped_flights <- group_by(hflights, Year, Month, DayofMonth)
+flights_data <- select(grouped_flights, Year:DayofMonth, ArrDelay, DepDelay) 
+summarized_flights <- summarise(flights_data, 
+                                arr = mean(ArrDelay, na.rm = TRUE), 	
+                                dep = mean(DepDelay, na.rm = TRUE)) 	
+final_result <- filter(summarized_flights, arr > 30 | dep > 30) 
+final_result
+```
+In the code above the missing data in columns ArrDelay and DepDelay are removed using parameter na.rm = TRUE.  
+Same operation is performed below using pipe operaters.
+```{r}
+hflights %>% group_by(Year, Month, DayofMonth) %>% 
+  select(Year:DayofMonth, ArrDelay, DepDelay) %>% 
+  summarise(arr = mean(ArrDelay, na.rm = TRUE), dep = mean(DepDelay, na.rm = TRUE)) %>% 
+  filter(arr > 30 | dep > 30)
+```
+The code above produces same result but using pipes. The code becomes more consice and understandable using pipes.
+
+# R markdown
+## R markdown with knitr and kable
+```{r kable, results = 'asis'}
+knitr::kable(head(mtcars), digits = 2, align = c(rep("l", 4), rep("c", 4), rep("r", 4)))
+```
+## R markdown with knitr and xtable
+``` {r xtable, results = 'asis'}
+library(xtable)
+print(xtable(head(mtcars)), type = 'html')
+```
+As we see above in R markdown formatted tables can be generated according to our liking by using kable or xtable.
+
+
+
+
+
+
+
