@@ -1,0 +1,104 @@
+---
+title: "Project2_R"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+##Text Mining
+Text mining is an technology that performs various operations on unstructured text in documents to generate structure data that can be used for different types of analysis.The purpose is generate structured information, extract meaningful insights from the text which is hidden in the initial stage.
+  Text databases consist of huge collection of documents.The data is collected from several sources such as news articles, books, social medias, digital libraries, web pages etc. Due to increase in the amount, in many of the databases, the data are unstructured or semi-structured. The important goal of text mining is to derive high quality information from the text.Thus, text mining is an artificial intelligence technology that uses natural language processing to perform such transformation to discover new information.The areas of text mining include:- information retrieval, data mining, natural language processing, information extraction.
+
+##Performing text mining in own data
+#Loading data
+```{r}
+#install.packages("tm")
+library(tm)
+myCorpus <- Corpus(DirSource("AboutNepal")) #AboutNepal is folder that contains .txt file 
+inspect(myCorpus[[2]])
+
+(n <- length(myCorpus))
+```
+
+#Converting the whole text to lower case
+```{r}
+myCorpus <- tm_map(myCorpus,tolower)
+inspect(myCorpus[[2]])
+
+```
+
+#Removing Punctuation 
+```{r}
+myCorpus <- tm_map(myCorpus,removePunctuation)
+inspect(myCorpus[[2]])
+```
+
+#Removing Numbers
+```{r}
+myCorpus <- tm_map(myCorpus,removeNumbers)
+inspect(myCorpus[[2]])
+```
+
+#Removing stopwords of the english language
+```{r}
+myCorpus <- tm_map(myCorpus,removeWords,stopwords("english"))
+inspect(myCorpus[[2]])
+```
+
+#Removing whitespaces
+```{r}
+myCorpus <- tm_map(myCorpus,stripWhitespace)
+inspect(myCorpus[[2]])
+```
+
+#Performing Lemmatization
+```{r}
+#install.packages("textstem")
+library(textstem)
+myCorpus <- tm_map(myCorpus,lemmatize_strings)
+inspect(myCorpus[[2]])
+```
+
+#Preparing Document Matrix
+```{r}
+myTdm <- TermDocumentMatrix(myCorpus,control=list(wordLengths=c(1,Inf)))
+(freq.terms <- findFreqTerms(myTdm,lowfreq=20))
+```
+
+#Viewing the corelations between the words.
+```{r}
+findAssocs(myTdm,"nepal",0.8)
+findAssocs(myTdm,"country",0.8)
+```
+
+#Generating Word Clouds
+```{r}
+#install.packages("wordcloud")
+library(wordcloud)
+m <- as.matrix(myTdm)
+freq <- sort(rowSums(m),decreasing = T)
+wordcloud(words=names(freq),freq=freq,min.freq=4,random.order = F)
+```
+
+#Performing topic modelling
+```{r}
+#install.packages("topicmodels")
+library(topicmodels)
+set.seed(123)
+myLda <- LDA(as.DocumentTermMatrix(myTdm),k=8)
+terms(myLda,5)
+```
+
+#Viewing the processed text data in plots.
+```{r}
+myTdm2 <- removeSparseTerms(myTdm,sparse = 0.95)
+m2 <-as.matrix(myTdm2)
+distMatrix <-dist(scale(m2))
+fit <- hclust(distMatrix,method="ward.D")
+plot(fit)
+```
